@@ -1,0 +1,71 @@
+version: '3.3'
+services:
+  nodejs:
+    build: 
+      context: .
+    image: nodejs:latest
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASS=password
+      - MYSQL_DB=backend_demo
+#      - MONGO_USERNAME=root
+#      - MONGO_PASSWORD=password
+      - MONGO_HOSTNAME=mongo-db
+      - MONGO_PORT=27017
+      - MONGO_DB=backend_demo
+
+    volumes:
+      - ./www/:/var/www/html/
+    expose:
+      - '51005' 
+    container_name: conn1
+    links: 
+      - db:db
+      - mongo-db:mongo-db
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'backend_demo'
+      # So you don't have to use root, but you can if you like
+      MYSQL_USER: 'user'
+      # You can use whatever password you like
+      MYSQL_PASSWORD: 'password'
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: 'password'
+    container_name: mysql
+    ports:
+      # <Port exposed> : < MySQL Port running inside container>
+      - '3306:3306'
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+      # Where our data will be persisted
+    volumes:
+      - my-db:/var/lib/mysql
+  mongo-db:
+    image: mongo
+    restart: always
+    ports:
+      - '27017:27017'
+    container_name: mongo-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'root'
+      MONGO_INITDB_ROOT_PASSWORD: 'password'
+      MONGO_INITDB_DATABASE: 'backend_demo'  
+    expose:
+      - '27017'
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo-js:ro 
+      - ./mongo-volume:/data/db 
+
+# Names our volume
+volumes:
+  my-db:
+
+networks:
+  default:
+    external:
+      name: my_net
+
